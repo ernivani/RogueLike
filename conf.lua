@@ -4,5 +4,5 @@ function love.conf(t)
     t.window.fullscreen = true  -- mettre en plein écran
     t.window.vsync = 1           
     t.window.msaa = 0            
-    t.console = false
+    t.console = true
 end
