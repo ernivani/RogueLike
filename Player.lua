@@ -17,6 +17,7 @@ function Player:new(x,y,speed,lives,weapons)
         weapons = weapons,
         activeWeapon = 1,
         score = 0,
+        isShooting = false
     }
 
     setmetatable(obj, Player)
@@ -57,6 +58,20 @@ function Player:update(dt,enemies)
 
     -- check if the player is colliding with an enemy
     
+    if self.isShooting then
+        local dx =  (love.mouse.getX() - self.x - 10)
+        local dy = (love.mouse.getY() - self.y - 10)
+        local length = math.sqrt(dx * dx + dy * dy)
+
+        if length == 0 then
+            length = 1
+        end
+
+        dx = dx / length
+        dy = dy / length
+
+        self.weapons[self.activeWeapon]:shoot(self.x , self.y, dx, dy)
+    end
 
     for i, weapon in ipairs(self.weapons) do
         weapon:update(dt,enemies)
@@ -66,20 +81,12 @@ end
 
 
 function Player:shoot(mouse_x, mouse_y)
-    local dx = mouse_x - (self.x + 10)  -- Offset to shoot from the center of the player
-    local dy = mouse_y - (self.y + 10)  -- Same offset for y
-    local length = math.sqrt(dx * dx + dy * dy)
-
-    if length == 0 then  -- Prevent division by zero
-        length = 1
-    end
-
-    dx = dx / length
-    dy = dy / length
-
-    self.weapons[self.activeWeapon]:shoot(self.x , self.y, dx, dy)
+    self.isShooting = true
 end
 
+function Player:stopShooting()
+    self.isShooting = false
+end
 
 
 

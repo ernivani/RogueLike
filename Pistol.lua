@@ -11,14 +11,14 @@ end
 
 function Pistol:new()
     local obj = {
-        fireRate = 0.3,
+        fireRate = 0.1,
         lastFire = 0,
-        magazine = 15,
-        maxAmmo = 15,
+        magazine = 30,
+        maxAmmo = 30,
         totalAmmo = math.huge,  
-        reloadTime = 1.5,
+        reloadTime = 0.5,
         reloadTimer = 0,
-        damage = 10,
+        damage = 13,
         projectileSpeed = 500,
         projectiles = {}
     }

@@ -12,6 +12,7 @@ local Pistol = require("Pistol")
 local enemies = {}
 local player
 local Weapons = {Pistol:new()}
+local gamestate = "menu"
 
 -- set the random seed
 math.randomseed(os.time())
@@ -21,7 +22,7 @@ function love.load()
         love.window.setMode(800, 600) 
     end
 
-    player = Player:new(100, 100,3, 3, Weapons) 
+    player = Player:new(love.graphics.getWidth() / 2, love.graphics.getHeight() / 2,3, 3, Weapons)
 end
 
 function love.keypressed(key)
@@ -37,7 +38,7 @@ end
 
 function love.update(dt)
 
-    if gameover then
+    if gamestate == "gameover" then
         if love.keyboard.isDown("r") then
             for i = #enemies, 1, -1 do
                 table.remove(enemies, i)
@@ -45,11 +46,26 @@ function love.update(dt)
             for i = #player.weapons[1].projectiles, 1, -1 do
                 table.remove(player.weapons[player.activeWeapon].projectiles, i)
             end
-            gameover = false
+            gamestate = "game" 
             player = Player:new(100, 100,3, 3, Weapons)
+        end
+        
+        if love.keyboard.isDown("escape") then
+            love.event.quit()
         end
         return
     end
+
+    if gamestate == "menu" then
+        if love.keyboard.isDown("space") or love.keyboard.isDown("return") then
+            gamestate = "game"
+        end
+        if love.keyboard.isDown("escape") then
+            love.event.quit()
+        end
+        return
+    end
+
     player:update(dt,enemies)
 
     -- Check if the player is colliding with an enemy
@@ -59,7 +75,7 @@ function love.update(dt)
             table.remove(enemies, i)
             player.lives = player.lives - 1
             if player.lives <= 0 then
-                gameover = true
+                gamestate = "gameover"
             end
         end
     end
@@ -71,6 +87,7 @@ function love.update(dt)
             local projectile = player.weapons[1].projectiles[j]
             if checkCollision(projectile.x, projectile.y, 5, enemy.x, enemy.y, 10) then
                 enemy.health = enemy.health - projectile.damage
+                enemy.speed = enemy.speed*1.1
                 table.remove(player.weapons[player.activeWeapon].projectiles, j)
 
                 if enemy.health <= 0 then
@@ -89,10 +106,29 @@ function love.update(dt)
     end
 
     -- Example logic to spawn an enemy
-    if #enemies < 5 then  -- Just an example condition
-        table.insert(enemies, Enemy:new(math.random(1, 3), math.random(0, 800), math.random(0, 600), player))
+    if #enemies < f(player.score) then
+        table.insert(enemies, Enemy:new(math.random(1, enemyGenerate(player.score)), math.random(0, love.graphics.getWidth()), math.random(0, love.graphics.getHeight()), player))
     end
 
+end
+
+function enemyGenerate(score)
+    if score < 30 then
+        return 1
+    elseif score < 70 then
+        return math.random(1, 2)
+    else
+        return math.random(1, 3)
+    end
+end
+
+function f(x)
+    if x==0 then return 1 end
+    return 0.1 * expo(x) + 0.1 * x
+end
+
+function expo(x) 
+    return 0.1 * x ^ 1.1
 end
 
 function love.draw()
@@ -103,16 +139,25 @@ function love.draw()
         enemy:draw()
     end
 
-    if gameover then
+    if gamestate == "gameover" then
         love.graphics.setColor(1, 0, 0)
         love.graphics.print("Game Over!", love.graphics.getWidth() / 2 - 50, love.graphics.getHeight() / 2 - 10)
         love.graphics.print("Press R to restart", love.graphics.getWidth() / 2 - 50, love.graphics.getHeight() / 2 + 10)
-
+        love.graphics.print("Press Esc to quit", love.graphics.getWidth() / 2 - 50, love.graphics.getHeight() / 2 + 10)
+        return
     end
+
+    if gamestate == "menu" then
+        love.graphics.setColor(1, 0, 0)
+        love.graphics.print("Press Space to start", love.graphics.getWidth() / 2 - 50, love.graphics.getHeight() / 2 - 10)
+        love.graphics.print("Press Esc to quit", love.graphics.getWidth() / 2 - 50, love.graphics.getHeight() / 2 + 10)
+        return
+    end
+
 end
 
 function love.mousepressed(mouse_x, mouse_y, button)
-    if gameover then
+    if gamestate == "gameover" then
         return
     end
     if button == 1 then
@@ -120,3 +165,11 @@ function love.mousepressed(mouse_x, mouse_y, button)
     end
 end
 
+function love.mousereleased(mouse_x, mouse_y, button)
+    if gamestate == "gameover" then
+        return
+    end
+    if button == 1 then
+        player:stopShooting()
+    end
+end
